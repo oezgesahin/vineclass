@@ -9,7 +9,6 @@ output: github_document
 # vineclass: Vine Copula-Based Classifiers
 
 <!-- badges: start -->
-[![R-CMD-check](https://github.com/oezgesahin/vineclass/workflows/R-CMD-check/badge.svg)](https://github.com/oezgesahin/vineclass/actions)
 <!-- badges: end -->
 
 vineclass provides tools for vine copula-based classification for a mixed of continuous-ordinal variables. It splits data into learning (training) and test sets, fits vine copulas per class on the training subset, and computes classification summaries (including posterior probabilities) on the test set or new data.
