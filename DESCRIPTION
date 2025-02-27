@@ -1,0 +1,22 @@
+Package: vineclass
+Title: Vine copula-based classifier
+Version: 1.0.0
+Authors@R: 
+    c(person(given ="Oezge",family = "Sahin", email = "O.Sahin@tudelft.nl", role = c("aut", "cre")),
+    person(given ="Harry", family ="Joe", email = "harry@stat.ubc.ca", role = c("aut", "ctb")))
+Description: Fit vine copulas to the distribution of features in each class for classification tasks and provide classification summaries. 
+License: GPL-3
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.1
+Imports:
+    Matrix,
+    igraph,
+    kde1d,
+    polycor,
+    psych,
+    rvinecopulib,
+    stringr
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
