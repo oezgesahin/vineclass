@@ -40,7 +40,7 @@
 
 test_vineclass <- function(test_data, model_output, var_types) {
   truncate_u <- function(u) pmin(pmax(u, 1e-12), 1-1e-12)
-  total_features <- ncol(test_data)
+  total_features <- length(var_types)
   total_obs_test <- nrow(test_data)
   count_c <- sum(var_types == "c")
   count_d <- sum(var_types == "d")
