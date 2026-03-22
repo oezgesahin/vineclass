@@ -29,6 +29,10 @@ Below is an overview of some functions and features.
 
 * ```test_vineclass()```: calculates posterior probabilities on new test data using fitted vine models from \code{vineclass()}.
 
+By default, `vineclass()` estimates class priors from the learning-set class frequencies,
+`pi_hat_k = n_k / n`, stores them in `result$class_priors`, and computes posterior
+probabilities proportional to `pi_hat_k * f_hat_k(x)`.
+
 ## Fitting with continuous variables
 
 ```r
@@ -69,6 +73,10 @@ print(head(result$post_prob_learn, 5))
 #> [3,] 0.903166318 0.09683368
 #> [4,] 0.005886429 0.99411357
 #> [5,] 0.156375672 0.84362433
+
+# Estimated class priors from the learning data
+print(result$class_priors)
+#> [1] 0.5 0.5
 ```
 
 ## Assess classification accuracy

@@ -4,13 +4,14 @@
 #' dataset for a vine copula-based classifier.
 #' Given the test data and the vine models (from the training phase),
 #' it transforms the test data into u-scale, calculates marginal
-#' densities, applies the fitted vine models, and calculates posterior probabilities.
+#' densities, applies the fitted vine models, and calculates posterior probabilities
+#' using the class priors stored in \code{model_output}.
 #' @param test_data A matrix or data frame containing test data on the original scale. The data
-#'   should have the same structure (number of columns) as the learning data used for model fitting.
-#'   The last column must contain class labels.
+#'   should have the same predictor columns as the learning data used for model fitting.
+#'   If a class-label column is present, it is ignored.
 #' @param model_output A list produced by the vine copula fitting function (e.g., \code{vineclass}),
 #'   which contains the fitted vine models, chosen variables, and fitted kernel density
-#'   estimates.
+#'   estimates, along with class prior probabilities.
 #' @param var_types A character vector indicating the type of each variable (e.g., \code{"c"} for
 #'   continuous and \code{"d"} for discrete). Its length should equal the number of variable columns.
 #' @return A matrix of posterior probabilities for each test observation across all classes.
@@ -84,42 +85,24 @@ test_vineclass <- function(test_data, model_output, var_types) {
     }
   }
 
-
-  chosen_cand <- model_output$chosen_vars
-  vars <- chosen_cand
-  nvars <- length(var_types)
-
-  # Check if the elements at specified indices are "d"
-  is_d <- var_types[chosen_cand] == "d"
-  # Extract the indices where "d" is found
-  d_indices <- chosen_cand[is_d]
-  d_positions <- which(var_types == "d")
-  indices <- match(d_indices, d_positions)
-  if(length(is_d) >0){
-    chosen_cand <- c(vars, nvars+indices)
+  class_priors <- if (!is.null(model_output$class_priors)) {
+    resolve_class_priors(total_cl = total_cl, class_priors = model_output$class_priors)
+  } else if (!is.null(model_output$train_data)) {
+    resolve_class_priors(
+      labels = model_output$train_data[, ncol(model_output$train_data)],
+      total_cl = total_cl
+    )
+  } else {
+    rep(1 / total_cl, total_cl)
   }
-  else{
-    chosen_cand <- vars
-  }
-  vine_mdl <- model_output$vine
 
-  rvine_densities <- sapply(1:total_cl, function(j) {
-    result <-  dvinecop(u_test_df[[j]], vine_mdl[[j]])
-    result[is.na(result)] <- 1e-5
-    result[which(result==0)] <- 1e-5
-    return(result)
-  })
-
-  lik_points_test <- sapply(1:total_cl, function(j) {
-    marginal_densities <- apply(dmar_test[[j]], 1, prod)
-    marginal_densities[is.na(marginal_densities)] <- 1e-5
-    marginal_densities[which(marginal_densities==0)] <- 1e-5
-    result <- marginal_densities * rvine_densities[, j]
-    return(result)
-  })
-
-
-  lik_per_obs_test <- apply(lik_points_test, 1, sum)
-  post_prob_test <- lik_points_test/rep(lik_per_obs_test, total_cl)
-  post_prob_test
+  vine_out(
+    test = u_test_df,
+    dmar_test = dmar_test,
+    total_cl = total_cl,
+    chosen_cand = model_output$chosen_vars,
+    var_types = var_types,
+    vine_mdl = model_output$vine,
+    class_priors = class_priors
+  )$post_prob
 }

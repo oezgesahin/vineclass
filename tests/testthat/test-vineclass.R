@@ -108,3 +108,44 @@ test_that("vineclass splits data when learn_ratio < 1 and returns testdata", {
   expect_true(nrow(result$train_data) > 0)
   expect_true(nrow(result$test_data) > 0)
 })
+
+test_that("vineclass estimates class priors from the learning data", {
+  set.seed(11)
+  data <- data.frame(matrix(rnorm(400), ncol = 2))
+  data$class <- c(rep(1, 150), rep(2, 50))
+
+  result <- vineclass(
+    data = data,
+    learn_ratio = 0.7,
+    var_types = c("c", "c"),
+    nCore = 1
+  )
+
+  expected_priors <- prop.table(table(result$train_data[, ncol(result$train_data)]))
+  expect_equal(unname(result$class_priors), unname(as.numeric(expected_priors)))
+})
+
+test_that("test_vineclass uses stored class priors", {
+  set.seed(12)
+  data1 <- data.frame(x1 = rnorm(60), x2 = rnorm(60))
+  data2 <- data.frame(x1 = rnorm(60), x2 = rnorm(60))
+  data1$class <- 1
+  data2$class <- 2
+  data <- rbind(data1, data2)
+
+  result <- vineclass(
+    data = data,
+    learn_ratio = 1,
+    var_types = c("c", "c"),
+    nCore = 1
+  )
+
+  test_data <- data.frame(x1 = c(-0.5, 0, 0.5), x2 = c(-0.5, 0, 0.5))
+  post_default <- test_vineclass(test_data, result, c("c", "c"))
+
+  result_shifted <- result
+  result_shifted$class_priors <- c(0.95, 0.05)
+  post_shifted <- test_vineclass(test_data, result_shifted, c("c", "c"))
+
+  expect_false(isTRUE(all.equal(post_default, post_shifted)))
+})

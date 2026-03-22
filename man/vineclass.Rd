@@ -11,7 +11,8 @@ vineclass(
   copfam = "parametric",
   nCore = NULL,
   trunc_lvl = Inf,
-  var_types
+  var_types,
+  class_priors = NULL
 )
 }
 \arguments{
@@ -34,22 +35,30 @@ If missing or \code{NULL}, it is set to the minimum of the total number of class
 \item{trunc_lvl}{A numeric value specifying the truncation level for the vine copula models. Inf means no truncation}
 
 \item{var_types}{A character vector of length \code{ncol(data) - 1}, indicating "c" or "d" for each variable.}
+
+\item{class_priors}{Optional numeric vector of class prior probabilities. If
+omitted, priors are estimated from the class frequencies in the learning
+data.}
 }
 \value{
 A list containing:
 \describe{
 \item{\code{vine}}{List of fitted vine copula models for each class.}
 \item{\code{chosen_vars}}{Vector of selected variables used for vine modeling.}
+\item{\code{class_priors}}{Estimated or user-supplied class prior probabilities.}
 \item{\code{fitted_kdes}}{List of KDEs (marginal densities) for each class in the learning set.}
 \item{\code{post_prob_learn}}{Posterior probabilities for the learning data.}
 \item{\code{post_prob_test}}{Posterior probabilities for the test data (if a test set exists).}
+\item{\code{train_data}}{Data frame containing the learning data used for fitting.}
 \item{\code{test_data}}{Data frame containing the test data used for evaluation (if a test set exists).}
 }
 }
 \description{
 This is the main function for vine copula-based classification. It splits the
 data into learning and test sets (if applicable), fits vine copula models for each class,
-and returns posterior probabilities for both the learning and test sets.
+estimates class prior probabilities from the learning data unless they are
+supplied explicitly, and returns posterior probabilities for both the learning
+and test sets.
 }
 \examples{
 \donttest{

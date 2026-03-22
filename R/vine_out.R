@@ -10,6 +10,8 @@
 #' @param chosen_cand A vector of integers indicating the indices of selected variables.
 #' @param var_types A character vector of length \code{ncol(data) - 1}, indicating "c" or "d" for each variable.
 #' @param vine_mdl A list of fitted vine copula models for each class.
+#' @param class_priors A numeric vector of class prior probabilities with length
+#'   \code{total_cl}.
 #'
 #' @return A list containing:
 #' \itemize{
@@ -20,7 +22,7 @@
 #'
 #'
 #' @noRd
-vine_out <- function(test, dmar_test, total_cl, chosen_cand, var_types, vine_mdl) {
+vine_out <- function(test, dmar_test, total_cl, chosen_cand, var_types, vine_mdl, class_priors) {
   # Validate inputs
   stopifnot(is.list(test), is.list(dmar_test), is.list(vine_mdl))
   stopifnot(length(test) == total_cl, length(dmar_test) == total_cl, length(vine_mdl) == total_cl)
@@ -62,8 +64,7 @@ vine_out <- function(test, dmar_test, total_cl, chosen_cand, var_types, vine_mdl
   })
 
   # Compute posterior probabilities
-  lik_per_obs_test <- rowSums(lik_points_test)
-  post_prob <- lik_points_test / matrix(rep(lik_per_obs_test, total_cl), ncol = total_cl, byrow = FALSE)
+  post_prob <- posterior_from_likelihoods(lik_points_test, class_priors)
 
   # Determine predicted class labels
   vine_lbl <- apply(post_prob, 1, function(x) which.max(x))

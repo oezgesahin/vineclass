@@ -2,7 +2,9 @@
 #' @description
 #' This is the main function for vine copula-based classification. It splits the
 #' data into learning and test sets (if applicable), fits vine copula models for each class,
-#' and returns posterior probabilities for both the learning and test sets.
+#' estimates class prior probabilities from the learning data unless they are
+#' supplied explicitly, and returns posterior probabilities for both the learning
+#' and test sets.
 #'
 #' @param data A data frame or matrix. The last column should contain class labels,
 #'   which will be re-labeled internally to 1, 2, ..., K if not already.
@@ -17,14 +19,19 @@
 #'   \code{parallel::detectCores() - 1}.
 #' @param trunc_lvl A numeric value specifying the truncation level for the vine copula models. Inf means no truncation
 #' @param var_types A character vector of length \code{ncol(data) - 1}, indicating "c" or "d" for each variable.
+#' @param class_priors Optional numeric vector of class prior probabilities. If
+#'   omitted, priors are estimated from the class frequencies in the learning
+#'   data.
 #'
 #' @return A list containing:
 #' \describe{
 #'   \item{\code{vine}}{List of fitted vine copula models for each class.}
 #'   \item{\code{chosen_vars}}{Vector of selected variables used for vine modeling.}
+#'   \item{\code{class_priors}}{Estimated or user-supplied class prior probabilities.}
 #'   \item{\code{fitted_kdes}}{List of KDEs (marginal densities) for each class in the learning set.}
 #'   \item{\code{post_prob_learn}}{Posterior probabilities for the learning data.}
 #'   \item{\code{post_prob_test}}{Posterior probabilities for the test data (if a test set exists).}
+#'   \item{\code{train_data}}{Data frame containing the learning data used for fitting.}
 #'   \item{\code{test_data}}{Data frame containing the test data used for evaluation (if a test set exists).}
 #' }
 #'
@@ -60,7 +67,8 @@ vineclass <- function(data,
                       copfam = "parametric",
                       nCore = NULL,
                       trunc_lvl = Inf,
-                      var_types)
+                      var_types,
+                      class_priors = NULL)
 {
   # Validate 'data'
   if (!is.data.frame(data) && !is.matrix(data)) {
@@ -119,6 +127,12 @@ vineclass <- function(data,
     test <- NULL
   }
 
+  class_priors <- resolve_class_priors(
+    labels = learn[, class_col_index],
+    total_cl = total_classes,
+    class_priors = class_priors
+  )
+
   # Get copula data (u-scale) and marginal densities from the learning (and optional test) sets
   copula_data <- get_u_data_dens(learn=learn, test=test, total_cl = total_classes, var_types= var_types)
 
@@ -137,14 +151,23 @@ vineclass <- function(data,
     copfam = copfam,
     nCore = nCore,
     trunc_lvl = trunc_lvl,
-    var_types = var_types
+    var_types = var_types,
+    class_priors = class_priors
   )
   # Retrieve posterior probabilities for the learning data
   post_prob_learn <- vine_fit$post_prob_learn
 
   # Compute posterior probabilities for the test set (if it exists)
   if (!is.null(test_u)) {
-    post_prob_test <- vine_out(test_u, dmar_test, total_classes, vine_fit$chosen_cand, var_types, vine_fit$vine)$post_prob
+    post_prob_test <- vine_out(
+      test_u,
+      dmar_test,
+      total_classes,
+      vine_fit$chosen_cand,
+      var_types,
+      vine_fit$vine,
+      class_priors
+    )$post_prob
   } else {
     post_prob_test <- NULL
   }
@@ -153,6 +176,7 @@ vineclass <- function(data,
   list(
     vine = vine_fit$vine,
     chosen_vars = vine_fit$chosen_cand,
+    class_priors = class_priors,
     fitted_kdes = copula_data$margins,
     post_prob_learn = post_prob_learn,
     post_prob_test = post_prob_test,
