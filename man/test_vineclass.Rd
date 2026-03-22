@@ -8,12 +8,12 @@ test_vineclass(test_data, model_output, var_types)
 }
 \arguments{
 \item{test_data}{A matrix or data frame containing test data on the original scale. The data
-should have the same structure (number of columns) as the learning data used for model fitting.
-The last column must contain class labels.}
+should have the same predictor columns as the learning data used for model fitting.
+If a class-label column is present, it is ignored.}
 
 \item{model_output}{A list produced by the vine copula fitting function (e.g., \code{vineclass}),
 which contains the fitted vine models, chosen variables, and fitted kernel density
-estimates.}
+estimates, along with class prior probabilities.}
 
 \item{var_types}{A character vector indicating the type of each variable (e.g., \code{"c"} for
 continuous and \code{"d"} for discrete). Its length should equal the number of variable columns.}
@@ -26,7 +26,8 @@ This function calculates posterior probabilities on an external test
 dataset for a vine copula-based classifier.
 Given the test data and the vine models (from the training phase),
 it transforms the test data into u-scale, calculates marginal
-densities, applies the fitted vine models, and calculates posterior probabilities.
+densities, applies the fitted vine models, and calculates posterior probabilities
+using the class priors stored in \code{model_output}.
 }
 \examples{
 \donttest{

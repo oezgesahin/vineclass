@@ -14,6 +14,8 @@
 #' @param trunc_lvl A numeric value specifying the truncation level for the vine copula models. Inf means no truncation
 #' @param var_types A character vector of variable types (\code{"c"} for continuous,
 #'   \code{"d"} for discrete).
+#' @param class_priors A numeric vector of class prior probabilities with length
+#'   \code{total_cl}.
 #'
 #' @return A list with the following components:
 #' \describe{
@@ -40,7 +42,7 @@
 #' @import rvinecopulib
 #' @importFrom parallel mclapply
 #' @noRd
-vine_all <- function(learn, vars, total_cl, dmar_learn, copfam, nCore, trunc_lvl, var_types) {
+vine_all <- function(learn, vars, total_cl, dmar_learn, copfam, nCore, trunc_lvl, var_types, class_priors) {
   cols <- ncol(learn[[1]])
   vine_mdl <- list()
   nvars <- length(var_types)
@@ -104,8 +106,7 @@ vine_all <- function(learn, vars, total_cl, dmar_learn, copfam, nCore, trunc_lvl
     result
   })
 
-  lik_per_obs_learn <- apply(lik_points_learn, 1, sum)
-  post_prob_learn <- lik_points_learn / rep(lik_per_obs_learn, total_cl)
+  post_prob_learn <- posterior_from_likelihoods(lik_points_learn, class_priors)
 
   list(
     vine = vine_mdl,
